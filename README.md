@@ -70,14 +70,15 @@ All of these addresses live on `10.10.10.0/24` and are assigned via Multus (stat
 
 ## Images (including GHCR)
 
-Most Open5GS components use published images (for example `gradiant/open5gs:2.7.6`).
+All container images are defined directly in the Kubernetes manifests in this repo (the `image:` fields in `open5gs/*.yaml`, `ims/*.yaml`, and `monitoring/*.yaml`).
 
-This repo also uses **custom images** for some components (notably PyHSS and, depending on your setup, the IMS containers). The intent is to publish these to **GitHub Container Registry (GHCR)**.
+If you are using a Kubernetes UI that shows an **“Images” tab**, treat it as **read-only/observability**: you generally do not “pick images” there for this lab. Instead, use the images already referenced in the YAMLs, or change the `image:` fields to point to the images you want.
 
-Until your GHCR images are available (or if you are iterating locally), you have two options:
+Notes:
 
-1. **Build locally and keep `imagePullPolicy: Never`** (works well for single-node labs).
-2. **Change the manifests to use `ghcr.io/<your-org>/<image>:<tag>` and set `imagePullPolicy: IfNotPresent`**.
+- This repo is configured to use `ghcr.io/ygzaydn/*` images in the manifests.
+- If you cannot pull `ghcr.io/ygzaydn/*` (for example, due to auth/networking), either provide the required `imagePullSecret` or build the images locally and tag them to match the `ghcr.io/ygzaydn/*` names used in the YAMLs.
+- Some components have Docker build contexts in this repo (for example `ims/dns/`, `ims/mysql/`, `ims/pyhss/`). If you prefer local images, build/tag them and keep the manifest `image:` values aligned with `ghcr.io/ygzaydn/*`.
 
 ## Prerequisites
 
