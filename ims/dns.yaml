@@ -22,18 +22,6 @@ spec:
           envFrom:
             - configMapRef: { name: ims-env }
           env:
-            - name: DNS_IP
-              value: "10.10.10.60"
-            - name: PYHSS_IP
-              value: "10.10.10.1"
-            - name: ICSCF_IP
-              value: "10.3.0.27"
-            - name: SCSCF_IP
-              value: "10.3.0.27"
-            - name: PCSCF_IP
-              value: "10.3.0.27"
-            - name: TAS_IP
-              value: "10.3.0.27"
             - name: NRF_IP
               value: "10.10.10.10"
             - name: SCP_IP

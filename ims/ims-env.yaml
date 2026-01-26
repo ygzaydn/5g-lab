@@ -13,15 +13,15 @@ data:
 
   # IMS IP plans
   DNS_IP:   "10.10.10.60"
-  PCSCF_IP: "10.3.0.27"
-  ICSCF_IP: "10.3.0.27"
-  SCSCF_IP: "10.3.0.27"
-  TAS_IP: "10.3.0.27"
+  #PCSCF_IP: "10.3.0.27"
+  PCSCF_IP : "10.10.10.61"
+  ICSCF_IP: "10.10.10.62"
+  SCSCF_IP: "10.10.10.63"
+  #TAS_IP: "10.3.0.27"
 
   RTPENGINE_IP: "10.10.10.64"
   MYSQL_IP: "10.10.10.65"
-  #PYHSS_IP: "10.10.10.66"
-  PYHSS_IP: "10.10.10.1"
+  PYHSS_IP: "10.10.10.66"
 
   # Diameter Ports
   PYHSS_BIND_PORT: "3868"

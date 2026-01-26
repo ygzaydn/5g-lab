@@ -24,8 +24,11 @@ echo "MySQL Bekleniyor..."
 while ! mysqladmin ping -h ${MYSQL_IP} -uroot -p${MYSQL_PWD} --silent; do sleep 2; done
 
 echo "SCSCF Tabloları yükleniyor..."
-mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/standard-create.sql 2>/dev/null || true
-mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/ims_usrloc_scscf-create.sql 2>/dev/null || true
+#mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/standard-create.sql 2>/dev/null || true
+#mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/ims_usrloc_scscf-create.sql 2>/dev/null || true
+
+mysql -u root -p$MYSQL_PWD -h ims-mysql ims < /mnt/scscf/standard-create.sql
+mysql -u root -p$MYSQL_PWD -h ims-mysql ims < /mnt/scscf/ims_usrloc_scscf-create.sql
 
 mkdir -p /var/run/kamailio
 exec kamailio -f /etc/kamailio_scscf/kamailio_scscf.cfg -P /var/run/kamailio/scscf.pid -DD -E

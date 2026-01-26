@@ -17,7 +17,7 @@ metadata:
   namespace: open5gs
 data:
   00-init.sql: |
-    CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'ims';
+    CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'imspass';
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
     
     CREATE DATABASE IF NOT EXISTS scscf;
