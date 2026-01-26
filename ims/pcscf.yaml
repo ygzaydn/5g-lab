@@ -22,7 +22,7 @@ spec:
         nameservers: [ "10.10.10.60" ]
       containers:
         - name: pcscf
-          image: docker_kamailio  
+          image:  ghcr.io/kamailio/kamailio:5.8.7-noble
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

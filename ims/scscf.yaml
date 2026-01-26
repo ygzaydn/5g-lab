@@ -19,7 +19,7 @@ spec:
         nameservers: [ "10.10.10.60" ]
       containers:
         - name: scscf
-          image: ghcr.io/herlesupreeth/docker_kamailio:master
+          image: ghcr.io/kamailio/kamailio:5.8.7-noble 
           securityContext:
             privileged: true
           envFrom:
