@@ -14,7 +14,7 @@ data:
     smf:
       p-cscf:
         #- 10.10.10.61
-        - 10.3.0.27
+        - 10.10.10.61
       sbi:
         server:
           - dev: net1

@@ -7,28 +7,27 @@ mkdir -p /etc/kamailio_scscf
 cp /mnt/scscf/* /etc/kamailio_scscf/
 
 cd /etc/kamailio_scscf/
-# Yer tutucuları değiştir
+
 sed -i "s|SCSCF_IP|$SCSCF_IP|g" *.cfg *.xml
 sed -i "s|MYSQL_IP|$MYSQL_IP|g" *.cfg *.xml
 sed -i "s|IMS_DOMAIN|$IMS_DOMAIN|g" *.cfg *.xml
 sed -i "s|IMS_SLASH_DOMAIN|$IMS_SLASH_DOMAIN|g" *.cfg *.xml
-
-# Senin belirlediğin portları XML'e yaz (Diameter Standart: 3868)
 sed -i "s|PYHSS_BIND_PORT|3868|g" scscf.xml
 sed -i "s|SCSCF_BIND_PORT|3868|g" scscf.xml
 
-# DB URL'i Secret ve MySQL Init ile eşitle
 sed -i 's|#!define DB_URL .*|#!define DB_URL "mysql://scscf:imspass@'$MYSQL_IP'/scscf"|' scscf.cfg
 
 echo "MySQL Bekleniyor..."
 while ! mysqladmin ping -h ${MYSQL_IP} -uroot -p${MYSQL_PWD} --silent; do sleep 2; done
 
-echo "SCSCF Tabloları yükleniyor..."
-#mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/standard-create.sql 2>/dev/null || true
-#mysql -u root -h ${MYSQL_IP} -p${MYSQL_PWD} scscf < /usr/local/src/kamailio/utils/kamctl/mysql/ims_usrloc_scscf-create.sql 2>/dev/null || true
+echo "Veritabanı ve Tablolar hazırlanıyor..."
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} -e "CREATE DATABASE IF NOT EXISTS scscf;"
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} -e "CREATE USER IF NOT EXISTS 'scscf'@'%' IDENTIFIED BY 'imspass';"
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} -e "GRANT ALL PRIVILEGES ON scscf.* TO 'scscf'@'%'; FLUSH PRIVILEGES;"
 
-mysql -u root -p$MYSQL_PWD -h ims-mysql ims < /mnt/scscf/standard-create.sql
-mysql -u root -p$MYSQL_PWD -h ims-mysql ims < /mnt/scscf/ims_usrloc_scscf-create.sql
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} scscf < /mnt/scscf/standard-create.sql
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} scscf < /mnt/scscf/presence-create.sql
+mysql -u root -p$MYSQL_PWD -h ${MYSQL_IP} scscf < /mnt/scscf/ims_usrloc_scscf-create.sql
 
 mkdir -p /var/run/kamailio
 exec kamailio -f /etc/kamailio_scscf/kamailio_scscf.cfg -P /var/run/kamailio/scscf.pid -DD -E
