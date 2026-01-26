@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-dns
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: ims-dns }
+  template:
+    metadata:
+      labels: { app: ims-dns }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [{ "name": "sbi-network", "ips": [ "10.10.10.60/24" ] }]
+    spec:
+      containers:
+        - name: dns
+          # image: ghcr.io/herlesupreeth/docker_dns:master
+          image: ghcr.io/ygzaydn/5glab-ims-dns:latest
+          command: ["/bin/bash", "/mnt/dns/dns_init.sh"]
+          envFrom:
+            - configMapRef: { name: ims-env }
+          env:
+            - name: DNS_IP
+              value: "10.10.10.60"
+            - name: PYHSS_IP
+              value: "10.10.10.1"
+            - name: ICSCF_IP
+              value: "10.3.0.27"
+            - name: SCSCF_IP
+              value: "10.3.0.27"
+            - name: PCSCF_IP
+              value: "10.3.0.27"
+            - name: TAS_IP
+              value: "10.3.0.27"
+            - name: NRF_IP
+              value: "10.10.10.10"
+            - name: SCP_IP
+              value: "10.10.10.11"
+            # Placeholder values
+            - name: SMSC_IP
+              value: "10.10.10.65"
+            - name: IBCF_IP
+              value: "10.10.10.66"
+            - name: PCRF_IP
+              value: "10.10.10.67"
+            - name: OSMOEPDG_IP
+              value: "10.10.10.68"
+            - name: ENTITLEMENT_SERVER_IP
+              value: "10.10.10.69"
+            - name: DOCKER_HOST_IP
+              value: "10.10.10.70"
+          volumeMounts:
+            - name: dns-mnt
+              mountPath: /mnt/dns
+      volumes:
+        - name: dns-mnt
+          configMap:
+            name: ims-dns-files
+            defaultMode: 0755

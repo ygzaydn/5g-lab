@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scp
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scp
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "sbi-network", "ips": ["10.10.10.11/24"] }
+          ]
+      labels:
+        app: scp
+    spec:
+      containers:
+      - name: scp
+        # image: gradiant/open5gs:2.7.6
+        image: ghcr.io/ygzaydn/5glab-scp:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/scp.yaml
+            sed -i 's/addr: 127.0.0.200/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/scp.yaml
+              #sed -i 's|uri: http://nrf:7777|uri: http://10.10.10.10:7777|g' /opt/open5gs/etc/open5gs/scp.yaml
+            open5gs-scpd -c /opt/open5gs/etc/open5gs/scp.yaml
+        env:
+        - name: DB_URI
+          value: "mongodb://mongodb:27017/open5gs"
+        ports:
+        - containerPort: 7777
+          name: sbi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scp
+  namespace: open5gs
+spec:
+  clusterIP: None
+  ports:
+    - name: sbi
+      protocol: TCP
+      port: 7777
+      targetPort: 7777
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: scp
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.11
+    ports:
+      - name: sbi
+        port: 7777
+        protocol: TCP
+      - name: metrics
+        port: 9090
+        protocol: TCP

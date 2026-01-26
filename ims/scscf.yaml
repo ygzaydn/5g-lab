@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scscf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: scscf }
+  template:
+    metadata:
+      labels: { app: scscf }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [ { "name": "sbi-network", "ips": [ "10.10.10.63/24" ] } ]
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [ "10.10.10.60" ]
+      containers:
+        - name: scscf
+          image: ghcr.io/herlesupreeth/docker_kamailio:master
+          securityContext:
+            privileged: true
+          envFrom:
+            - configMapRef: { name: ims-env }
+          env:
+            - name: COMPONENT_NAME
+              value: "scscf"
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: ims-mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+          command: ["/bin/bash", "/mnt/scscf/scscf_init.sh"]
+          volumeMounts:
+            - name: scscf-mnt
+              mountPath: /mnt/scscf
+      volumes:
+        - name: scscf-mnt
+          configMap:
+            name: ims-scscf-files
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scscf
+  namespace: open5gs
+spec:
+  selector: { app: scscf }
+  ports:
+    - name: sip-udp
+      port: 6060
+      protocol: UDP
+    - name: sip-tcp
+      port: 6060
+      protocol: TCP

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ausf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ausf
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[
+          { "name": "sbi-network", "ips": ["10.10.10.15/24"] }
+        ]'
+      labels:
+        app: ausf
+    spec:
+      containers:
+      - name: ausf
+        # image: gradiant/open5gs:2.7.6
+        image: ghcr.io/ygzaydn/5glab-ausf:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/ausf.yaml
+            sed -i 's/addr: 127.0.0.9/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/ausf.yaml
+              #sed -i 's|http://nrf:7777|http://10.10.10.10:7777|g' /opt/open5gs/etc/open5gs/ausf.yaml
+              #sed -i 's|http://scp:7777|http://10.10.10.11:7777|g' /opt/open5gs/etc/open5gs/ausf.yaml
+            /opt/open5gs/bin/open5gs-ausfd -c /opt/open5gs/etc/open5gs/ausf.yaml
+        ports:
+        - containerPort: 7777
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ausf
+  namespace: open5gs
+spec:
+  clusterIP: None
+  ports:
+    - name: sbi
+      protocol: TCP
+      port: 7777
+      targetPort: 7777
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: ausf
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.15
+    ports:
+      - name: sbi
+        port: 7777
+      - name: metrics
+        port: 9090

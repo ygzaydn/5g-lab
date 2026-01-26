@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyhss
+  namespace: open5gs
+spec:
+  selector:
+    app: pyhss
+  ports:
+    - name: diameter-3868
+      port: 3868
+      targetPort: 3868
+    - name: diameter-3870
+      port: 3870
+      targetPort: 3868
+    - name: diameter-3872
+      port: 3872
+      targetPort: 3868
+    - name: api
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyhss
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: pyhss }
+  template:
+    metadata:
+      labels: { app: pyhss }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "sbi-network", "ips": [ "10.10.10.66/24" ] }
+          ]
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 10.10.10.60
+      containers:
+        - name: pyhss
+          # image: ghcr.io/herlesupreeth/docker_pyhss:master
+          # image: cinar/pyhss:custom-v1
+          image: ghcr.io/ygzaydn/5glab-pyhss:latest
+          imagePullPolicy: IfNotPresent
+          #imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true 
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              iptables -t nat -A PREROUTING -p tcp --dport 3870 -j REDIRECT --to-ports 3868 || true
+              iptables -t nat -A PREROUTING -p tcp --dport 3872 -j REDIRECT --to-ports 3868 || true
+              chmod -R 777 /pyhss/log/ || true
+              exec /usr/local/bin/pyhss_init.sh
+          envFrom:
+            - configMapRef: { name: ims-env }
+          env:
+            - name: MYSQL_HOST
+              value: "10.10.10.65"
+            - name: PYHSS_IP
+              value: "10.10.10.66" 
+            - name: PYHSS_BIND_PORT
+              value: "3868"
+            - name: MYSQL_IP        
+              value: "10.10.10.65"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_ROOT_PASSWORD } }
+            - name: MYSQL_DATABASE
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_DATABASE } }
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_USER } }
+            - name: MYSQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_PASSWORD } }
+          volumeMounts:
+            - name: pyhss-logs
+              mountPath: /pyhss/log/
+          ports:
+            - name: diameter-3868
+              containerPort: 3868
+              protocol: TCP
+            - name: api
+              containerPort: 8080
+              protocol: TCP
+      volumes:
+        - name: pyhss-logs
+          emptyDir: {}

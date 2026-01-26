@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: icscf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: icscf }
+  template:
+    metadata:
+      labels: { app: icscf }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "sbi-network", "ips": [ "10.10.10.62/24" ] }
+          ]
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [ "10.10.10.60" ]
+      containers:
+        - name: icscf
+          image: ghcr.io/herlesupreeth/docker_kamailio:master
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          envFrom:
+            - configMapRef: { name: ims-env }
+          env:
+            - name: COMPONENT_NAME
+              value: "icscf"
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: ims-mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+
+          command: ["/bin/bash", "/mnt/icscf/icscf_init.sh"]
+          volumeMounts:
+            - name: icscf-mnt
+              mountPath: /mnt/icscf
+          ports:
+            - name: sip-udp
+              containerPort: 6060
+              protocol: UDP
+            - name: sip-tcp
+              containerPort: 6060
+              protocol: TCP
+            - name: diameter-tcp
+              containerPort: 3868
+              protocol: TCP
+      volumes:
+        - name: icscf-mnt
+          configMap:
+            name: ims-icscf-files
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: icscf
+  namespace: open5gs
+spec:
+  selector: { app: icscf }
+  ports:
+    - name: sip-udp
+      port: 6060
+      targetPort: 6060
+      protocol: UDP
+    - name: sip-tcp
+      port: 6060
+      targetPort: 6060
+      protocol: TCP

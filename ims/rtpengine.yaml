@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rtpengine-script
+  namespace: open5gs
+data:
+  rtpengine_init.sh: |
+    #!/bin/bash
+    set -x
+    
+    # Kernel modülü hatasını görmezden gel, userspace'i zorla
+    modprobe xt_RTPENGINE || echo "Kernel module not found, using userspace mode."
+
+    INTERFACE="10.10.10.64"
+    LISTEN_NG="10.10.10.64:2223"
+    PORT_MIN="30000"
+    PORT_MAX="40000"
+    LISTEN_CLI="127.0.0.1:9901"
+    PIDFILE="/run/ngcp-rtpengine-daemon.pid"
+
+    OPTIONS="--interface=$INTERFACE --listen-ng=$LISTEN_NG --listen-cli=$LISTEN_CLI --pidfile=$PIDFILE --port-min=$PORT_MIN --port-max=$PORT_MAX --table=-1 --tos=184 --foreground"
+
+    set +e
+    ip r add ${UE_IPV4_IMS:-10.46.0.0/16} via ${UPF_IP:-10.10.10.21} 2>/dev/null
+    set -x
+
+    exec /usr/bin/rtpengine $OPTIONS
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtpengine
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rtpengine
+  template:
+    metadata:
+      labels:
+        app: rtpengine
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [{ "name": "sbi-network", "ips": [ "10.10.10.64/24" ] }]
+    spec:
+      containers:
+        - name: rtpengine
+          # image: ghcr.io/herlesupreeth/docker_rtpengine:master
+          image: ghcr.io/ygzaydn/5glab-rtpengine:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["NET_ADMIN", "SYS_ADMIN"]
+          envFrom:
+            - configMapRef:
+                name: ims-env
+          command: ["/bin/bash", "/mnt/scripts/rtpengine_init.sh"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /mnt/scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: rtpengine-script
+            defaultMode: 0755
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtpengine
+  namespace: open5gs
+spec:
+  selector:
+    app: rtpengine
+  type: ClusterIP
+  ports:
+    - name: ng-control
+      port: 2223
+      protocol: UDP
+      targetPort: 2223
+    - name: cli
+      port: 9901
+      protocol: TCP
+      targetPort: 9901

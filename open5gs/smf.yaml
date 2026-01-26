@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smf-config
+  namespace: open5gs
+data:
+  smf.yaml: |-
+    logger:
+      file:
+        path: /opt/open5gs/var/log/open5gs/smf.log
+
+    global:
+
+    smf:
+      p-cscf:
+        #- 10.10.10.61
+        - 10.3.0.27
+      sbi:
+        server:
+          - dev: net1
+            port: 7777
+        client:
+          scp:
+            - uri: http://scp:7777
+
+      pfcp:
+        server:
+          - dev: net1
+        client:
+          upf:
+            - address: upf
+
+      gtpc:
+        server:
+          - dev: net1
+
+      gtpu:
+        server:
+          - dev: net1
+
+      metrics:
+        server:
+          - dev: net1
+            port: 9090
+
+      session:
+        - subnet: 10.45.0.1/16
+          dnn: internet
+        - subnet: 10.46.0.1/16
+          dnn: ims
+        - subnet: 10.47.0.1/16
+          dnn: internet-s2
+        - subnet: 10.48.0.1/16
+          dnn: ims-s2
+
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+
+      mtu: 1400
+
+      ctf:
+        enabled: auto
+
+      freeDiameter: /opt/open5gs/etc/freeDiameter/smf.conf
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smf
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "sbi-network", "ips": ["10.10.10.13/24"] }
+          ]
+      labels:
+        app: smf
+    spec:
+      containers:
+        - name: smf
+          # image: gradiant/open5gs:2.7.6
+          image: ghcr.io/ygzaydn/5glab-smf:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              sed -i 's|TLS_Cred = .*|TLS_Cred = "/opt/open5gs/etc/freeDiameter/smf.cert.pem", "/opt/open5gs/etc/freeDiameter/smf.key.pem";|g' /opt/open5gs/etc/freeDiameter/smf.conf
+              sed -i 's|TLS_CA = .*|TLS_CA = "/opt/open5gs/etc/freeDiameter/cacert.pem";|g' /opt/open5gs/etc/freeDiameter/smf.conf
+              sed -i 's/^ConnectPeer = "pcrf.gradiant"/#ConnectPeer = "pcrf.gradiant"/g' /opt/open5gs/etc/freeDiameter/smf.conf
+              /opt/open5gs/bin/open5gs-smfd -c /opt/open5gs/etc/open5gs/smf.yaml
+          volumeMounts:
+            - name: smf-config
+              mountPath: /opt/open5gs/etc/open5gs/smf.yaml
+              subPath: smf.yaml
+          ports:
+            - containerPort: 7777
+              protocol: TCP
+            - containerPort: 8805
+              protocol: UDP
+            - containerPort: 9090
+              protocol: TCP
+      volumes:
+        - name: smf-config
+          configMap:
+            name: smf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smf
+  namespace: open5gs
+spec:
+  clusterIP: None
+  ports:
+    - name: sbi
+      port: 7777
+      targetPort: 7777
+      protocol: TCP
+    - name: n4
+      protocol: UDP
+      port: 8805
+      targetPort: 8805
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: smf
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.13
+    ports:
+      - name: sbi
+        port: 7777
+        protocol: TCP
+      - name: n4
+        port: 8805
+        protocol: UDP
+      - name: metrics
+        port: 9090
+        protocol: TCP
+

@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nssf-config
+  namespace: open5gs
+data:
+  nssf.yaml: |-
+    logger:
+      file:
+        path: /opt/open5gs/var/log/open5gs/nssf.log
+
+    global:
+
+    nssf:
+      sbi:
+        server:
+        - dev: net1
+          port: 7777
+        client:
+          scp:
+          - uri: http://scp:7777
+          nsi:
+          - uri: http://nrf:7777
+            s_nssai:
+              sst: 1
+          - uri: http://nrf:7777
+            s_nssai:
+              sst: 2
+              sd: "000061"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nssf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nssf
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[
+          { "name": "sbi-network", "ips": ["10.10.10.16/24"] }
+        ]'
+      labels:
+        app: nssf
+    spec:
+      containers:
+      - name: nssf
+        # image: gradiant/open5gs:2.7.6
+        image: ghcr.io/ygzaydn/5glab-nssf:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            /opt/open5gs/bin/open5gs-nssfd -c /opt/open5gs/etc/open5gs/nssf.yaml
+        volumeMounts:
+        - name: nssf-config
+          mountPath: /opt/open5gs/etc/open5gs/nssf.yaml
+          subPath: nssf.yaml
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        - containerPort: 9090
+          protocol: TCP
+      volumes:
+      - name: nssf-config
+        configMap:
+          name: nssf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nssf
+  namespace: open5gs
+spec:
+  clusterIP: None
+  ports:
+    - name: sbi
+      protocol: TCP
+      port: 7777
+      targetPort: 7777
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: nssf
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.16
+    ports:
+      - name: sbi
+        port: 7777
+        protocol: TCP
+      - name: metrics
+        port: 9090
+        protocol: TCP
+

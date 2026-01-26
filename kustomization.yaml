@@ -1,0 +1,105 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Keep generated ConfigMap names stable so Deployments can reference them.
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - namespace.yaml
+  - network/sbi-network.yaml
+
+  # Open5GS core
+  - open5gs/mongodb.yaml
+  - open5gs/nrf.yaml
+  - open5gs/scp.yaml
+  - open5gs/amf.yaml
+  - open5gs/smf.yaml
+  - open5gs/upf.yaml
+  - open5gs/udm.yaml
+  - open5gs/udr.yaml
+  - open5gs/ausf.yaml
+  - open5gs/nssf.yaml
+  - open5gs/pcf.yaml
+  - open5gs/bsf.yaml
+  - open5gs/web-ui.yaml
+
+  # IMS + HSS
+  - ims/ims-env-kamailio.yaml
+  - ims/dns.yaml
+  - ims/mysql.yaml
+  - ims/pyhss.yaml
+  - ims/rtpengine.yaml
+  - ims/icscf.yaml
+  - ims/scscf.yaml
+  - ims/pcscf.yaml
+
+  # Monitoring (optional; remove if not needed)
+  - monitoring/prometheus-clusterrole.yaml
+  - monitoring/prometheus-clusterrolebinding.yaml
+  - monitoring/prometheus-sa.yaml
+  - monitoring/prometheus-config.yaml
+  - monitoring/prometheus.yaml
+  - monitoring/grafana.yaml
+
+configMapGenerator:
+  - name: ims-dns-files
+    files:
+      - dns_init.sh=ims/dns/dns_init.sh
+      - named.conf=ims/dns/named.conf
+      - ims_zone=ims/dns/ims_zone
+      - epc_zone=ims/dns/epc_zone
+      - pub_3gpp_zone=ims/dns/pub_3gpp_zone
+      - e164.arpa=ims/dns/e164.arpa
+
+  - name: ims-icscf-files
+    files:
+      - icscf_init.sh=ims/icscf/icscf_init.sh
+      - icscf.cfg=ims/icscf/icscf.cfg
+      - icscf.xml=ims/icscf/icscf.xml
+      - kamailio_icscf.cfg=ims/icscf/kamailio_icscf.cfg
+      - icscf.sql=ims/icscf/icscf.sql
+
+  - name: ims-scscf-files
+    files:
+      - scscf_init.sh=ims/scscf/scscf_init.sh
+      - scscf.cfg=ims/scscf/scscf.cfg
+      - scscf.xml=ims/scscf/scscf.xml
+      - kamailio_scscf.cfg=ims/scscf/kamailio_scscf.cfg
+      - dispatcher.list=ims/scscf/dispatcher.list
+      - standard-create.sql=ims/scscf/standard-create.sql
+      - presence-create.sql=ims/scscf/presence-create.sql
+      - ims_usrloc_scscf-create.sql=ims/scscf/ims_usrloc_scscf-create.sql
+      - CxDataType_Rel6.xsd=ims/scscf/CxDataType_Rel6.xsd
+      - CxDataType_Rel7.xsd=ims/scscf/CxDataType_Rel7.xsd
+      - CxDataType_Rel8.xsd=ims/scscf/CxDataType_Rel8.xsd
+
+  - name: ims-pcscf-files
+    files:
+      - pcscf_init.sh=ims/pcscf/pcscf_init.sh
+      - pcscf.cfg=ims/pcscf/pcscf.cfg
+      - pcscf.xml=ims/pcscf/pcscf.xml
+      - kamailio_pcscf.cfg=ims/pcscf/kamailio_pcscf.cfg
+      - tls.cfg=ims/pcscf/tls.cfg
+      - dispatcher.list=ims/pcscf/dispatcher.list
+
+      - route_mo.cfg=ims/pcscf/route/mo.cfg
+      - route_mt.cfg=ims/pcscf/route/mt.cfg
+      - route_register.cfg=ims/pcscf/route/register.cfg
+      - route_rtp.cfg=ims/pcscf/route/rtp.cfg
+      - route_websocket.cfg=ims/pcscf/route/websocket.cfg
+      - route_xmlrpc.cfg=ims/pcscf/route/xmlrpc.cfg
+
+      - sems.conf=ims/pcscf/sems/sems.conf
+      - sems_etc_methodmap.conf=ims/pcscf/sems/etc/methodmap.conf
+      - sems_etc_monitoring.conf=ims/pcscf/sems/etc/monitoring.conf
+      - sems_etc_mo.sbcprofile.conf=ims/pcscf/sems/etc/mo.sbcprofile.conf
+      - sems_etc_mt.sbcprofile.conf=ims/pcscf/sems/etc/mt.sbcprofile.conf
+      - sems_etc_nocache.sbcprofile.conf=ims/pcscf/sems/etc/nocache.sbcprofile.conf
+      - sems_etc_refuse.sbcprofile.conf=ims/pcscf/sems/etc/refuse.sbcprofile.conf
+      - sems_etc_refuse_with_200.sbcprofile.conf=ims/pcscf/sems/etc/refuse_with_200.sbcprofile.conf
+      - sems_etc_register.sbcprofile.conf=ims/pcscf/sems/etc/register.sbcprofile.conf
+      - sems_etc_rurimap.conf=ims/pcscf/sems/etc/rurimap.conf
+      - sems_etc_sbc.conf=ims/pcscf/sems/etc/sbc.conf
+      - sems_etc_stats.conf=ims/pcscf/sems/etc/stats.conf
+      - sems_etc_xmlrpc2di.conf=ims/pcscf/sems/etc/xmlrpc2di.conf

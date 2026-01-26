@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyhss
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: pyhss }
+  template:
+    metadata:
+      labels: { app: pyhss }
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "sbi-network", "ips": [ "10.10.10.66/24" ] }
+          ]
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 10.10.10.60
+      containers:
+        - name: pyhss
+          # image: ghcr.io/herlesupreeth/docker_pyhss:master
+          image: ghcr.io/ygzaydn/5glab-pyhss:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-lc", "/usr/local/bin/pyhss_init.sh"]
+          envFrom:
+            - configMapRef: { name: ims-env }
+          env:
+            - name: MYSQL_HOST
+              value: "10.10.10.65"
+            - name: PYHSS_IP
+              value: "10.10.10.66" 
+            - name: PYHSS_BIND_PORT
+              value: "3868"
+            - name: MYSQL_IP       
+              value: "10.10.10.65"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_ROOT_PASSWORD } }
+            - name: MYSQL_DATABASE
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_DATABASE } }
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_USER } }
+            - name: MYSQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: ims-mysql-secret, key: MYSQL_PASSWORD } }
+          volumeMounts:
+            - name: pyhss-logs
+              mountPath: /pyhss/log/
+          ports:
+            - name: diameter-tcp
+              containerPort: 3868
+              protocol: TCP
+            - name: api
+              containerPort: 8080
+              protocol: TCP
+      volumes:
+        - name: pyhss-logs
+          emptyDir: {}

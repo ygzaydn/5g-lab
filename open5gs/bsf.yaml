@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bsf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bsf
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[
+          { "name": "sbi-network", "ips": ["10.10.10.20/24"] }
+        ]'
+      labels:
+        app: bsf
+    spec:
+      containers:
+      - name: bsf
+        # image: gradiant/open5gs:2.7.6
+        image: ghcr.io/ygzaydn/5glab-bsf:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/bsf.yaml
+            sed -i 's/addr: 127.0.0.10/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/bsf.yaml
+            sed -i 's|http://localhost:7777|http://scp:7777|g' /opt/open5gs/etc/open5gs/bsf.yaml
+            
+            /opt/open5gs/bin/open5gs-bsfd -c /opt/open5gs/etc/open5gs/bsf.yaml
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bsf
+  namespace: open5gs
+spec:
+  clusterIP: None
+  ports:
+    - name: sbi
+      protocol: TCP
+      port: 7777
+      targetPort: 7777
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: bsf
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.20
+    ports:
+      - name: sbi
+        port: 7777
+        protocol: TCP
+      - name: metrics
+        port: 9090
+        protocol: TCP
