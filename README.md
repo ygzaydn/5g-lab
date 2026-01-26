@@ -1,4 +1,4 @@
-# open5gs-k8s (5G + IMS PCAP-first testlab)
+# 5G-LAB
 
 This repository is a Kubernetes-based 5G testlab focused on learning packet-level flows.
 
