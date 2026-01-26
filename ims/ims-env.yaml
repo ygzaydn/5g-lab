@@ -34,16 +34,3 @@ data:
 
   SUBSCRIPTION_EXPIRES_ENV: "3600"
 
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ims-mysql-secret
-  namespace: open5gs
-type: Opaque
-stringData:
-  MYSQL_ROOT_PASSWORD: "ims"
-  MYSQL_DATABASE: "ims"
-  MYSQL_USER: "ims"
-  MYSQL_PASSWORD: "imspass"
-

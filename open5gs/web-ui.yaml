@@ -24,6 +24,8 @@ spec:
           value: "mongodb://mongodb:27017/open5gs"
         - name: MONGODB_URL
           value: "mongodb://mongodb:27017/open5gs"
+        - name: NODE_ENV
+          value: "development"
         ports:
         - containerPort: 9999
           name: http

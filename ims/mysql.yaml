@@ -8,7 +8,7 @@ stringData:
   MYSQL_ROOT_PASSWORD: "ims"
   MYSQL_DATABASE: "ims"
   MYSQL_USER: "ims"
-  MYSQL_PASSWORD: "ims"
+  MYSQL_PASSWORD: "imspass"
 ---
 apiVersion: v1
 kind: ConfigMap

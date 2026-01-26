@@ -91,6 +91,7 @@ Notes:
 Storage note:
 
 - This repo uses **PVCs** for MongoDB and IMS MySQL. Your cluster needs a default `StorageClass` (common on most local clusters).
+- Also make sure to have related folders for DBs( /mnt/data/mysql and /mnt/data/mongodb)
 
 ## Multus + bridge network setup
 
@@ -153,18 +154,14 @@ kubectl -n open5gs get pods -o wide
 ## Accessing UIs
 
 - **Open5GS WebUI**
-  - Recommended (works from your laptop): `http://<node-ip>:30000`
-  - Optional (if you are on the Kubernetes node and can reach `br-int`): `http://10.10.10.19:9999/`
+  - Accessible at `http://10.10.10.19:9999`
 
 - **Monitoring (Grafana)**
-  - Recommended: port-forward
-    - `kubectl -n open5gs port-forward deploy/grafana 3000:3000`
-    - then open `http://127.0.0.1:3000`
-  - Optional (if you are on the Kubernetes node and can reach `br-int`): `http://10.10.10.23:3000`
+  - Accessible at `http://10.10.10.23:3000`
 
 Default credentials:
 
-- Open5GS WebUI: `admin` / `12345`
+- Open5GS WebUI: `admin` / `1423`
 - Grafana: `admin` / `admin`
 
 ## Troubleshooting (common)

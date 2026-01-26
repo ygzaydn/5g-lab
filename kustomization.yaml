@@ -7,6 +7,7 @@ generatorOptions:
 
 resources:
   - namespace.yaml
+  - open5gs/storage.yaml
   - network/sbi-network.yaml
 
   # Open5GS core
@@ -25,7 +26,7 @@ resources:
   - open5gs/web-ui.yaml
 
   # IMS + HSS
-  - ims/ims-env-kamailio.yaml
+  - ims/ims-env.yaml
   - ims/dns.yaml
   - ims/mysql.yaml
   - ims/pyhss.yaml
