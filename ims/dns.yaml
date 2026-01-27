@@ -16,7 +16,6 @@ spec:
     spec:
       containers:
         - name: dns
-          # image: ghcr.io/herlesupreeth/docker_dns:master
           image: ghcr.io/ygzaydn/5glab-ims-dns:latest
           command: ["/bin/bash", "/mnt/dns/dns_init.sh"]
           envFrom:

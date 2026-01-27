@@ -48,7 +48,6 @@ spec:
     spec:
       containers:
         - name: rtpengine
-          # image: ghcr.io/herlesupreeth/docker_rtpengine:master
           image: ghcr.io/ygzaydn/5glab-rtpengine:latest
           imagePullPolicy: IfNotPresent
           securityContext:

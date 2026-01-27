@@ -44,7 +44,6 @@ spec:
           - 10.10.10.60
       containers:
         - name: pyhss
-          # image: ghcr.io/herlesupreeth/docker_pyhss:master
           # image: cinar/pyhss:custom-v1
           image: ghcr.io/ygzaydn/5glab-pyhss:latest
           imagePullPolicy: IfNotPresent
