@@ -24,6 +24,7 @@ spec:
         - name: pcscf
           image:  ghcr.io/kamailio/kamailio:5.8.7-noble
           imagePullPolicy: IfNotPresent
+          command: ["/mnt/pcscf/pcscf_init.sh"]
           securityContext:
             privileged: true
             capabilities:
@@ -64,4 +65,3 @@ spec:
       port: 5060
       protocol: TCP
       targetPort: 5060
-    # IPsec veya diğer portlar gerekiyorsa buraya eklenebilir
