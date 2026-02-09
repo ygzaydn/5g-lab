@@ -19,15 +19,34 @@ spec:
     spec:
       containers:
       - name: udr
-        # image: gradiant/open5gs:2.7.6
         image: ghcr.io/ygzaydn/5glab-udr:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "4"
+            memory: "1Gi"
         command: ["/bin/sh", "-c"]
         args:
           - |
+            # Global limitleri en başa ekle
+            if ! grep -q "global:" /opt/open5gs/etc/open5gs/udr.yaml; then
+              printf "global:\n  max:\n    ue: 8192\n" > /tmp/udr_header.yaml
+              cat /opt/open5gs/etc/open5gs/udr.yaml >> /tmp/udr_header.yaml
+              mv /tmp/udr_header.yaml /opt/open5gs/etc/open5gs/udr.yaml
+            else
+              sed -i '/global:/!b;n;n;s/ue: .*/ue: 8192/' /opt/open5gs/etc/open5gs/udr.yaml
+            fi
+
+            # SBI Stream limitlerini ekle
+            sed -i '/sbi:/a \    max_num_of_ostreams: 65535\n    max_num_of_istreams: 65535' /opt/open5gs/etc/open5gs/udr.yaml
+
+            # Standart sed işlemleri
             sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/udr.yaml
             sed -i 's/addr: 127.0.0.6/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/udr.yaml
-              #sed -i 's|http://nrf:7777|http://10.10.10.10:7777|g' /opt/open5gs/etc/open5gs/udr.yaml
-              #sed -i 's|http://scp:7777|http://10.10.10.11:7777|g' /opt/open5gs/etc/open5gs/udr.yaml
+            
+            ulimit -n 65535
             /opt/open5gs/bin/open5gs-udrd -c /opt/open5gs/etc/open5gs/udr.yaml
         env:
         - name: DB_URI
@@ -51,7 +70,6 @@ spec:
       protocol: TCP
       port: 9090
       targetPort: 9090
-
 ---
 apiVersion: v1
 kind: Endpoints

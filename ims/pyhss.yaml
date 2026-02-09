@@ -51,12 +51,20 @@ spec:
           securityContext:
             privileged: true 
           command: ["/bin/bash", "-c"]
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
           args:
             - |
               iptables -t nat -A PREROUTING -p tcp --dport 3870 -j REDIRECT --to-ports 3868 || true
               iptables -t nat -A PREROUTING -p tcp --dport 3872 -j REDIRECT --to-ports 3868 || true
+              ulimit -n 65535
               chmod -R 777 /pyhss/log/ || true
-              exec /usr/local/bin/pyhss_init.sh
+              bash /mnt/pyhss/pyhss_init.sh
           envFrom:
             - configMapRef: { name: ims-env }
           env:
@@ -79,6 +87,8 @@ spec:
           volumeMounts:
             - name: pyhss-logs
               mountPath: /pyhss/log/
+            - name: pyhss-files-volume
+              mountPath: /mnt/pyhss
           ports:
             - name: diameter-3868
               containerPort: 3868
@@ -89,3 +99,15 @@ spec:
       volumes:
         - name: pyhss-logs
           emptyDir: {}
+        - name: pyhss-files-volume
+          configMap:
+            name: ims-pyhss-files
+            items:
+              - key: config.yaml
+                path: config.yaml
+              - key: default_ifc.xml
+                path: default_ifc.xml
+              - key: default_sh_user_data.xml
+                path: default_sh_user_data.xml
+              - key: pyhss_init.sh
+                path: pyhss_init.sh

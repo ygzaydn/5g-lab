@@ -10,6 +10,8 @@ data:
         path: /opt/open5gs/var/log/open5gs/nrf.log
 
     global:
+      max:
+        ue: 8192
 
     nrf:
       serving:
@@ -21,6 +23,8 @@ data:
         server:
         - dev: net1
           port: 7777
+        max_num_of_ostreams: 65535
+        max_num_of_istreams: 65535
 
     metrics:
       server:
@@ -50,10 +54,12 @@ spec:
     spec:
       containers:
       - name: nrf
-        # image: gradiant/open5gs:2.7.6
         image: ghcr.io/ygzaydn/5glab-nrf:latest
-        command: ["/opt/open5gs/bin/open5gs-nrfd"]
-        args: ["-c", "/opt/open5gs/etc/open5gs/nrf.yaml"]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            ulimit -n 65535
+            /opt/open5gs/bin/open5gs-nrfd -c /opt/open5gs/etc/open5gs/nrf.yaml
         env:
         - name: DB_URI
           value: "mongodb://mongodb:27017/open5gs"
@@ -105,4 +111,3 @@ subsets:
       - name: metrics
         port: 9090
         protocol: TCP
-

@@ -90,3 +90,10 @@ configMapGenerator:
       - sems_etc_sbc.conf=ims/pcscf/sems/etc/sbc.conf
       - sems_etc_stats.conf=ims/pcscf/sems/etc/stats.conf
       - sems_etc_xmlrpc2di.conf=ims/pcscf/sems/etc/xmlrpc2di.conf
+
+  - name: ims-pyhss-files
+    files:
+      - ims/pyhss/pyhss_init.sh
+      - ims/pyhss/config.yaml
+      - ims/pyhss/default_ifc.xml
+      - ims/pyhss/default_sh_user_data.xml

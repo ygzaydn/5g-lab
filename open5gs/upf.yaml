@@ -8,6 +8,11 @@ data:
     logger:
       file:
         path: /opt/open5gs/var/log/open5gs/upf.log
+    
+    global:
+      max:
+        ue: 8192
+
     upf:
       pfcp:
         server:
@@ -59,7 +64,6 @@ spec:
     spec:
       containers:
         - name: upf
-          # image: gradiant/open5gs:2.7.6
           image: ghcr.io/ygzaydn/5glab-upf:latest
           securityContext:
             privileged: true
@@ -78,8 +82,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              ulimit -n 65535
               ls -l /dev/net/tun || true
-
               sysctl -w net.ipv4.ip_forward=1 || true
 
               ip tuntap add name ogstun mode tun || true
@@ -159,4 +163,3 @@ subsets:
       - name: metrics
         port: 9090
         protocol: TCP
-

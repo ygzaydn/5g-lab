@@ -27,7 +27,10 @@ data:
     CREATE DATABASE IF NOT EXISTS icscf;
     CREATE USER IF NOT EXISTS 'icscf'@'%' IDENTIFIED WITH mysql_native_password BY 'imspass';
     GRANT ALL PRIVILEGES ON icscf.* TO 'icscf'@'%';
-    
+
+    SET GLOBAL max_connections = 1000;
+    SET GLOBAL innodb_buffer_pool_size = 1073741824;
+
     FLUSH PRIVILEGES;
 
 ---
@@ -72,6 +75,9 @@ spec:
         - name: mysql
           # image: mysql:8.0
           image: ghcr.io/ygzaydn/5glab-ims-mysql:latest
+          args:
+            - "--max-connections=1000"
+            - "--innodb-buffer-pool-size=1G"
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:

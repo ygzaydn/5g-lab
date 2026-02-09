@@ -10,23 +10,27 @@ data:
         path: /opt/open5gs/var/log/open5gs/nssf.log
 
     global:
+      max:
+        ue: 8192
 
     nssf:
       sbi:
         server:
-        - dev: net1
-          port: 7777
+          - dev: net1
+            port: 7777
         client:
           scp:
-          - uri: http://scp:7777
+            - uri: http://scp:7777
           nsi:
-          - uri: http://nrf:7777
-            s_nssai:
-              sst: 1
-          - uri: http://nrf:7777
-            s_nssai:
-              sst: 2
-              sd: "000061"
+            - uri: http://nrf:7777
+              s_nssai:
+                sst: 1
+            - uri: http://nrf:7777
+              s_nssai:
+                sst: 2
+                sd: "000061"
+        max_num_of_ostreams: 65535
+        max_num_of_istreams: 65535
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -49,11 +53,11 @@ spec:
     spec:
       containers:
       - name: nssf
-        # image: gradiant/open5gs:2.7.6
         image: ghcr.io/ygzaydn/5glab-nssf:latest
         command: ["/bin/sh", "-c"]
         args:
           - |
+            ulimit -n 65535
             /opt/open5gs/bin/open5gs-nssfd -c /opt/open5gs/etc/open5gs/nssf.yaml
         volumeMounts:
         - name: nssf-config
@@ -101,4 +105,3 @@ subsets:
       - name: metrics
         port: 9090
         protocol: TCP
-

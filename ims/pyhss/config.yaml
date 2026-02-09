@@ -36,7 +36,7 @@ hss:
   client_socket_timeout: 120
 
   #The maximum time to wait, in seconds, before discarding a diameter request.
-  diameter_request_timeout: 3
+  diameter_request_timeout: 15 
 
   #The amount of time, in seconds, before purging a disconnected client from the Active Diameter Peers key in redis.
   active_diameter_peers_timeout: 10
@@ -93,17 +93,17 @@ eir:
   simSwapNotification: False # If the IMEI for a stored IMSI/IMEI combo changes, notify the webhook endpoint
 
 logging:
-  level: DEBUG 
+  level: ERROR 
   logfiles:
     hss_logging_file: /pyhss/log/hss.log
     diameter_logging_file: /pyhss/log/diameter.log
     geored_logging_file: /pyhss/log/geored.log
     metric_logging_file: /pyhss/log/metrics.log
-  log_to_terminal: True
-  sqlalchemy_sql_echo: True
+  log_to_terminal: False
+  sqlalchemy_sql_echo: False
   sqlalchemy_pool_recycle: 15
-  sqlalchemy_pool_size: 30
-  sqlalchemy_max_overflow: 0
+  sqlalchemy_pool_size: 500
+  sqlalchemy_max_overflow: 500
 
 ## Database Parameters
 database:
@@ -135,7 +135,8 @@ redis:
   # tcp - Connection via a standard TCP socket to a given host and port.
   # unix - Connect to redis via a unix socket, provided by unixSocketPath.
   # sentinel - Connect to one or more redis sentinel hosts.
-  connectionType: "tcp"
+  connectionType: "unix"
+  useUnixSocket: true
   unixSocketPath: '/var/run/redis/redis-server.sock'
   host: 127.0.0.1
   port: 6379

@@ -1,3 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ausf-config
+  namespace: open5gs
+data:
+  ausf.yaml: |
+    logger:
+      file:
+        path: /opt/open5gs/var/log/open5gs/ausf.log
+
+    global:
+      max:
+        ue: 8192
+
+    ausf:
+      sbi:
+        server:
+          - dev: net1
+            port: 7777
+        client:
+          scp:
+            - uri: http://scp:7777
+        max_num_of_ostreams: 65535
+        max_num_of_istreams: 65535
+
+    metrics:
+      server:
+        - dev: net1
+          port: 9090
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,18 +50,23 @@ spec:
     spec:
       containers:
       - name: ausf
-        # image: gradiant/open5gs:2.7.6
         image: ghcr.io/ygzaydn/5glab-ausf:latest
         command: ["/bin/sh", "-c"]
         args:
           - |
-            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/ausf.yaml
-            sed -i 's/addr: 127.0.0.9/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/ausf.yaml
-              #sed -i 's|http://nrf:7777|http://10.10.10.10:7777|g' /opt/open5gs/etc/open5gs/ausf.yaml
-              #sed -i 's|http://scp:7777|http://10.10.10.11:7777|g' /opt/open5gs/etc/open5gs/ausf.yaml
+            ulimit -n 65535
             /opt/open5gs/bin/open5gs-ausfd -c /opt/open5gs/etc/open5gs/ausf.yaml
         ports:
         - containerPort: 7777
+          name: sbi
+        volumeMounts:
+        - name: ausf-config
+          mountPath: /opt/open5gs/etc/open5gs/ausf.yaml
+          subPath: ausf.yaml
+      volumes:
+      - name: ausf-config
+        configMap:
+          name: ausf-config
 ---
 apiVersion: v1
 kind: Service
@@ -48,7 +84,6 @@ spec:
       protocol: TCP
       port: 9090
       targetPort: 9090
-
 ---
 apiVersion: v1
 kind: Endpoints
