@@ -51,13 +51,6 @@ spec:
           securityContext:
             privileged: true 
           command: ["/bin/bash", "-c"]
-          resources:
-            requests:
-              cpu: "1000m"
-              memory: "1Gi"
-            limits:
-              cpu: "2000m"
-              memory: "2Gi"
           args:
             - |
               iptables -t nat -A PREROUTING -p tcp --dport 3870 -j REDIRECT --to-ports 3868 || true
@@ -71,7 +64,8 @@ spec:
             - name: MYSQL_HOST
               value: "10.10.10.65"
             - name: PYHSS_IP
-              value: "10.10.10.66" 
+              #value: "10.10.10.66" 
+              value: "10.10.10.66"
             - name: PYHSS_BIND_PORT
               value: "3868"
             - name: MYSQL_IP        

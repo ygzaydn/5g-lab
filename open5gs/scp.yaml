@@ -1,3 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scp-config
+  namespace: open5gs
+data:
+  scp.yaml: |-
+    logger:
+      file:
+        path: /opt/open5gs/var/log/open5gs/scp.log
+
+    global:
+      max:
+        ue: 8192
+
+    scp:
+      sbi:
+        server:
+          - address: 10.10.10.11
+            port: 7777
+        client:
+          nrf:
+            - uri: http://nrf:7777
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,10 +35,7 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: |
-          [
-            { "name": "sbi-network", "ips": ["10.10.10.11/24"] }
-          ]
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "sbi-network", "ips": ["10.10.10.11/24"] }]'
       labels:
         app: scp
     spec:
@@ -24,21 +45,6 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # Global limitleri en başa ekle
-            if ! grep -q "global:" /opt/open5gs/etc/open5gs/scp.yaml; then
-              printf "global:\n  max:\n    ue: 8192\n" > /tmp/scp_header.yaml
-              cat /opt/open5gs/etc/open5gs/scp.yaml >> /tmp/scp_header.yaml
-              mv /tmp/scp_header.yaml /opt/open5gs/etc/open5gs/scp.yaml
-            else
-              sed -i '/global:/!b;n;n;s/ue: .*/ue: 8192/' /opt/open5gs/etc/open5gs/scp.yaml
-            fi
-
-            # SBI Stream limitlerini ekle (Proxy performansı için kritik)
-            sed -i '/sbi:/a \    max_num_of_ostreams: 65535\n    max_num_of_istreams: 65535' /opt/open5gs/etc/open5gs/scp.yaml
-
-            # Standart sed işlemleri
-            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/scp.yaml
-            sed -i 's/addr: 127.0.0.200/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/scp.yaml
             
             ulimit -n 65535
             /opt/open5gs/bin/open5gs-scpd -c /opt/open5gs/etc/open5gs/scp.yaml
@@ -48,6 +54,15 @@ spec:
         ports:
         - containerPort: 7777
           name: sbi
+          protocol: TCP
+        volumeMounts:
+        - name: scp-config
+          mountPath: /opt/open5gs/etc/open5gs/scp.yaml
+          subPath: scp.yaml
+      volumes:
+      - name: scp-config
+        configMap:
+          name: scp-config
 ---
 apiVersion: v1
 kind: Service

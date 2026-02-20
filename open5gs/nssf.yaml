@@ -16,11 +16,11 @@ data:
     nssf:
       sbi:
         server:
-          - dev: net1
+          - address: 10.10.10.16
             port: 7777
         client:
           scp:
-            - uri: http://scp:7777
+            - uri: http://10.10.10.11:7777
           nsi:
             - uri: http://nrf:7777
               s_nssai:
@@ -29,8 +29,6 @@ data:
               s_nssai:
                 sst: 2
                 sd: "000061"
-        max_num_of_ostreams: 65535
-        max_num_of_istreams: 65535
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,9 +43,7 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[
-          { "name": "sbi-network", "ips": ["10.10.10.16/24"] }
-        ]'
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "sbi-network", "ips": ["10.10.10.16/24"] }]'
       labels:
         app: nssf
     spec:

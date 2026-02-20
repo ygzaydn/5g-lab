@@ -15,33 +15,30 @@ data:
 
     smf:
       p-cscf:
-        - 10.3.0.27
+        - 15.15.15.16
       sbi:
         server:
-          - dev: net1
+          - address: 10.10.10.13
             port: 7777
         client:
           scp:
-            - uri: http://scp:7777
-        max_num_of_ostreams: 65535
-        max_num_of_istreams: 65535
+            - uri: http://10.10.10.11:7777
+
       pfcp:
         server:
-          - dev: net1
+          - address: 10.10.10.13
         client:
           upf:
-            - address: upf
-        max_num_of_ostreams: 65535
-        max_num_of_istreams: 65535
+            - address: 15.15.15.14
       gtpc:
         server:
-          - dev: net1
+          - address: 10.10.10.13
       gtpu:
         server:
-          - dev: net1
+          - address: 10.10.10.13
       metrics:
         server:
-          - dev: net1
+          - address: 10.10.10.13
             port: 9090
       session:
         - subnet: 10.45.0.1/16
@@ -73,10 +70,7 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: |
-          [
-            { "name": "sbi-network", "ips": ["10.10.10.13/24"] }
-          ]
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "sbi-network", "ips": ["10.10.10.13/24"] }]'
       labels:
         app: smf
     spec:

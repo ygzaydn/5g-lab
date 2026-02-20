@@ -8,7 +8,7 @@ data:
     logger:
       file:
         path: /opt/open5gs/var/log/open5gs/upf.log
-    
+
     global:
       max:
         ue: 8192
@@ -16,10 +16,10 @@ data:
     upf:
       pfcp:
         server:
-          - dev: net1
+          - address: 15.15.15.14
       gtpu:
         server:
-          - dev: net1
+          - address: 15.15.15.14
       session:
         - subnet: 10.45.0.0/16
           gateway: 10.45.0.1
@@ -39,8 +39,9 @@ data:
           dev: ogstun4
       metrics:
         server:
-          - dev: net1
+          - address: 15.15.15.14
             port: 9090
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -54,14 +55,11 @@ spec:
       app: upf
   template:
     metadata:
-      annotations:
-        k8s.v1.cni.cncf.io/networks: |
-          [
-            { "name": "sbi-network", "ips": ["10.10.10.21/24"] }
-          ]
       labels:
         app: upf
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: upf
           image: ghcr.io/ygzaydn/5glab-upf:latest
@@ -82,38 +80,67 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              ulimit -n 65535
-              ls -l /dev/net/tun || true
+              set -e
+
+              ulimit -n 65535 || true
+
+              # Ensure IP forwarding
               sysctl -w net.ipv4.ip_forward=1 || true
 
-              ip tuntap add name ogstun mode tun || true
-              ip addr add 10.45.0.1/16 dev ogstun || true
+              # (Recommended) avoid strict rp_filter issues on multi-interface setups
+              sysctl -w net.ipv4.conf.all.rp_filter=0 || true
+              sysctl -w net.ipv4.conf.default.rp_filter=0 || true
+
+              # Create TUNs (idempotent-ish)
+              ip tuntap add name ogstun mode tun 2>/dev/null || true
+              ip addr add 10.45.0.1/16 dev ogstun 2>/dev/null || true
               ip link set ogstun up || true
 
-              ip tuntap add name ogstun3 mode tun || true
-              ip addr add 10.46.0.1/16 dev ogstun3 || true
+              ip tuntap add name ogstun3 mode tun 2>/dev/null || true
+              ip addr add 10.46.0.1/16 dev ogstun3 2>/dev/null || true
               ip link set ogstun3 up || true
 
-              ip tuntap add name ogstun2 mode tun || true
-              ip addr add 10.47.0.1/16 dev ogstun2 || true
+              ip tuntap add name ogstun2 mode tun 2>/dev/null || true
+              ip addr add 10.47.0.1/16 dev ogstun2 2>/dev/null || true
               ip link set ogstun2 up || true
 
-              ip tuntap add name ogstun4 mode tun || true
-              ip addr add 10.48.0.1/16 dev ogstun4 || true
+              ip tuntap add name ogstun4 mode tun 2>/dev/null || true
+              ip addr add 10.48.0.1/16 dev ogstun4 2>/dev/null || true
               ip link set ogstun4 up || true
 
-              iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE || true
-              iptables -t nat -A POSTROUTING -s 10.46.0.0/16 ! -o ogstun3 -j MASQUERADE || true
-              iptables -t nat -A POSTROUTING -s 10.47.0.0/16 ! -o ogstun2 -j MASQUERADE || true
-              iptables -t nat -A POSTROUTING -s 10.48.0.0/16 ! -o ogstun4 -j MASQUERADE || true
+              # IMPORTANT if you keep UERANSIM on same host:
+              # Force traffic entering from ogstun* to use main routing table (prevents rt_uesimtun* hijack)
+              ip rule add pref 100 iif ogstun  lookup main 2>/dev/null || true
+              ip rule add pref 101 iif ogstun2 lookup main 2>/dev/null || true
+              ip rule add pref 102 iif ogstun3 lookup main 2>/dev/null || true
+              ip rule add pref 103 iif ogstun4 lookup main 2>/dev/null || true
+              ip route flush cache || true
 
-              /opt/open5gs/bin/open5gs-upfd -c /opt/open5gs/etc/open5gs/upf.yaml
+              # NAT (optional)
+              # If you will add static routes on IMS/other VMs back to 10.45/16..10.48/16, you can REMOVE this whole NAT section.
+              EGRESS_IF="$(ip route show default | awk '{print $5}' | head -n1 || true)"
+
+              if [ -n "${EGRESS_IF}" ]; then
+                iptables -t nat -C POSTROUTING -s 10.45.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE 2>/dev/null || \
+                  iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE
+                iptables -t nat -C POSTROUTING -s 10.46.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE 2>/dev/null || \
+                  iptables -t nat -A POSTROUTING -s 10.46.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE
+                iptables -t nat -C POSTROUTING -s 10.47.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE 2>/dev/null || \
+                  iptables -t nat -A POSTROUTING -s 10.47.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE
+                iptables -t nat -C POSTROUTING -s 10.48.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE 2>/dev/null || \
+                  iptables -t nat -A POSTROUTING -s 10.48.0.0/16 -o "${EGRESS_IF}" -j MASQUERADE
+              fi
+
+              exec /opt/open5gs/bin/open5gs-upfd -c /opt/open5gs/etc/open5gs/upf.yaml
           ports:
-            - containerPort: 8805
+            - name: n4
+              containerPort: 8805
               protocol: UDP
-            - containerPort: 2152
+            - name: n3
+              containerPort: 2152
               protocol: UDP
-            - containerPort: 9090
+            - name: metrics
+              containerPort: 9090
               protocol: TCP
       volumes:
         - name: dev-net-tun
@@ -123,43 +150,22 @@ spec:
         - name: upf-config
           configMap:
             name: upf-config
+
 ---
+# Optional: Only for scraping metrics from inside the cluster
+# (PFCP/GTP-U should be reached via 10.3.0.250 directly, not via Service)
 apiVersion: v1
 kind: Service
 metadata:
-  name: upf
+  name: upf-metrics
   namespace: open5gs
 spec:
-  clusterIP: None
+  type: ClusterIP
+  selector:
+    app: upf
   ports:
-    - name: n4
-      protocol: UDP
-      port: 8805
-      targetPort: 8805
-    - name: n3
-      protocol: UDP
-      port: 2152
-      targetPort: 2152
     - name: metrics
       protocol: TCP
       port: 9090
       targetPort: 9090
----
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: upf
-  namespace: open5gs
-subsets:
-  - addresses:
-      - ip: 10.10.10.21
-    ports:
-      - name: n4
-        port: 8805
-        protocol: UDP
-      - name: n3
-        port: 2152
-        protocol: UDP
-      - name: metrics
-        port: 9090
-        protocol: TCP
+

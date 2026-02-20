@@ -1,0 +1,20 @@
+apiVersion: v1
+items:
+- apiVersion: k8s.cni.cncf.io/v1
+  kind: NetworkAttachmentDefinition
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"k8s.cni.cncf.io/v1","kind":"NetworkAttachmentDefinition","metadata":{"annotations":{},"name":"sbi-network","namespace":"open5gs"},"spec":{"config":"{ \"cniVersion\": \"0.3.1\", \"type\": \"bridge\", \"bridge\": \"br-int\", \"promiscMode\": true, \"ipam\": { \"type\": \"static\" } }"}}
+    creationTimestamp: "2026-02-13T14:51:28Z"
+    generation: 1
+    name: sbi-network
+    namespace: open5gs
+    resourceVersion: "6517022"
+    uid: c1cd9d10-480b-42de-8c36-4852e07e3b7c
+  spec:
+    config: '{ "cniVersion": "0.3.1", "type": "bridge", "bridge": "br-int", "promiscMode":
+      true, "ipam": { "type": "static" } }'
+kind: List
+metadata:
+  resourceVersion: ""

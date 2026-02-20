@@ -41,8 +41,48 @@ spec:
           volumeMounts:
             - name: dns-mnt
               mountPath: /mnt/dns
+          ports:
+            - containerPort: 53
+              protocol: UDP
+            - containerPort: 53
+              protocol: TCP
       volumes:
         - name: dns-mnt
           configMap:
             name: ims-dns-files
             defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-dns
+  namespace: open5gs
+spec:
+  type: ClusterIP
+  ports:
+    - name: dns-udp
+      port: 53
+      protocol: UDP
+      targetPort: 53
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: 53
+  selector:
+    app: ims-dns
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: ims-dns
+  namespace: open5gs
+subsets:
+  - addresses:
+      - ip: 10.10.10.60
+    ports:
+      - name: dns-udp
+        port: 53
+        protocol: UDP
+      - name: dns-tcp
+        port: 53
+        protocol: TCP

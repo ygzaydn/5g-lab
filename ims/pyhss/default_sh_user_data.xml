@@ -1,29 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!--This is the default iFC template used by PyHSS, variables come from the Jinja2 template passed inside diameter.py where you can additional variables if required -->
 <Sh-Data>
-    <IMSPrivateUserIdentity>{{ Sh_template_vars['imsi'] }}@ims.mnc{{ Sh_template_vars['mnc'] }}.mcc{{ Sh_template_vars['mcc'] }}.3gppnetwork.org</IMSPrivateUserIdentity>
-    <!-- This provides the Public Identifiers to the Application Server -->
     <PublicIdentifiers>
-        <IMSPublicIdentity>sip:{{ Sh_template_vars['msisdn'] }}@ims.mnc{{ Sh_template_vars['mnc'] }}.mcc{{ Sh_template_vars['mcc'] }}.3gppnetwork.org</IMSPublicIdentity>
         <MSISDN>{{ Sh_template_vars['msisdn'] }}</MSISDN>
     </PublicIdentifiers>
 
-    <!-- This optional extension provides the Location of the serving MME for this subscriber and the TAC for the ULA -->
+    <RepositoryData>
+        <ServiceIndication>srv_cb</ServiceIndication>
+        <SequenceNumber>1</SequenceNumber>
+        <ServiceData>
+            <CB>
+                <LPSTN><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></LPSTN>
+                <IPSTN><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></IPSTN>
+                <LOCAL><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></LOCAL>
+                <MOBILE><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></MOBILE>
+                <INT><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></INT>
+                <INGRESS><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></INGRESS>
+                <ViLTE><INCOMING>0</INCOMING><OUTGOING>0</OUTGOING></ViLTE>
+            </CB>
+        </ServiceData>
+    </RepositoryData>
+
     <Extension>
-        <EPSLocationInformation>{% if Sh_template_vars['serving_mme'] is not none %}
-            <E-UTRANCellGlobalId></E-UTRANCellGlobalId>
-            <TrackingAreaId></TrackingAreaId>
-            <MMEName>{{ Sh_template_vars['serving_mme'] }}</MMEName>
-            <AgeOfLocationInformation>0</AgeOfLocationInformation>
+        <Extension>
             <Extension>
-                <VisitedPLMNID></VisitedPLMNID>
-            </Extension>{% endif %}          
-        </EPSLocationInformation>
+                <TADSInformation>
+                    <IMSVoiceOverPSSessionSupport>1</IMSVoiceOverPSSessionSupport>
+                    <RATtype>6</RATtype> </TADSInformation>
+                <Extension>
+                    <EPSUserState>1</EPSUserState>
+                    <IMSI>{{ Sh_template_vars['imsi'] }}</IMSI>
+                </Extension>
+            </Extension>
+        </Extension>
     </Extension>
-
-    <Sh-IMS-Data>
-        <S-CSCFName>{{ Sh_template_vars['scscf'] }}</S-CSCFName>
-        <IMSUserState>{{ Sh_template_vars['imsUserState'] }}</IMSUserState>
-    </Sh-IMS-Data>
-
 </Sh-Data>

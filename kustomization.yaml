@@ -6,9 +6,7 @@ generatorOptions:
   disableNameSuffixHash: true
 
 resources:
-  - namespace.yaml
   - open5gs/storage.yaml
-  - network/sbi-network.yaml
   - open5gs/mongodb.yaml
   - open5gs/nrf.yaml
   - open5gs/scp.yaml
@@ -27,9 +25,6 @@ resources:
   - ims/mysql.yaml
   - ims/pyhss.yaml
   - ims/rtpengine.yaml
-  - ims/icscf.yaml
-  - ims/scscf.yaml
-  - ims/pcscf.yaml
 
 configMapGenerator:
   - name: ims-dns-files
@@ -40,56 +35,6 @@ configMapGenerator:
       - ims/dns/epc_zone
       - ims/dns/pub_3gpp_zone
       - ims/dns/e164.arpa
-
-  - name: ims-icscf-files
-    files:
-      - ims/icscf/icscf_init.sh
-      - ims/icscf/icscf.cfg
-      - ims/icscf/icscf.xml
-      - ims/icscf/kamailio_icscf.cfg
-      - ims/icscf/icscf.sql
-
-  - name: ims-scscf-files
-    files:
-      - ims/scscf/scscf_init.sh
-      - ims/scscf/scscf.cfg
-      - ims/scscf/scscf.xml
-      - ims/scscf/kamailio_scscf.cfg
-      - ims/scscf/dispatcher.list
-      - ims/scscf/standard-create.sql
-      - ims/scscf/presence-create.sql
-      - ims/scscf/ims_usrloc_scscf-create.sql
-      - ims/scscf/CxDataType_Rel6.xsd
-      - ims/scscf/CxDataType_Rel7.xsd
-      - ims/scscf/CxDataType_Rel8.xsd
-
-  - name: ims-pcscf-files
-    files:
-      - ims/pcscf/pcscf_init.sh
-      - ims/pcscf/pcscf.cfg
-      - ims/pcscf/pcscf.xml
-      - ims/pcscf/kamailio_pcscf.cfg
-      - ims/pcscf/tls.cfg
-      - ims/pcscf/dispatcher.list
-      - route_mo.cfg=ims/pcscf/route/mo.cfg
-      - route_mt.cfg=ims/pcscf/route/mt.cfg
-      - route_register.cfg=ims/pcscf/route/register.cfg
-      - route_rtp.cfg=ims/pcscf/route/rtp.cfg
-      - route_websocket.cfg=ims/pcscf/route/websocket.cfg
-      - route_xmlrpc.cfg=ims/pcscf/route/xmlrpc.cfg
-      - sems.conf=ims/pcscf/sems/sems.conf
-      - sems_etc_methodmap.conf=ims/pcscf/sems/etc/methodmap.conf
-      - sems_etc_monitoring.conf=ims/pcscf/sems/etc/monitoring.conf
-      - sems_etc_mo.sbcprofile.conf=ims/pcscf/sems/etc/mo.sbcprofile.conf
-      - sems_etc_mt.sbcprofile.conf=ims/pcscf/sems/etc/mt.sbcprofile.conf
-      - sems_etc_nocache.sbcprofile.conf=ims/pcscf/sems/etc/nocache.sbcprofile.conf
-      - sems_etc_refuse.sbcprofile.conf=ims/pcscf/sems/etc/refuse.sbcprofile.conf
-      - sems_etc_refuse_with_200.sbcprofile.conf=ims/pcscf/sems/etc/refuse_with_200.sbcprofile.conf
-      - sems_etc_register.sbcprofile.conf=ims/pcscf/sems/etc/register.sbcprofile.conf
-      - sems_etc_rurimap.conf=ims/pcscf/sems/etc/rurimap.conf
-      - sems_etc_sbc.conf=ims/pcscf/sems/etc/sbc.conf
-      - sems_etc_stats.conf=ims/pcscf/sems/etc/stats.conf
-      - sems_etc_xmlrpc2di.conf=ims/pcscf/sems/etc/xmlrpc2di.conf
 
   - name: ims-pyhss-files
     files:

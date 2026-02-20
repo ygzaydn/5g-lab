@@ -16,17 +16,15 @@ data:
     ausf:
       sbi:
         server:
-          - dev: net1
+          - address: 10.10.10.15
             port: 7777
         client:
           scp:
-            - uri: http://scp:7777
-        max_num_of_ostreams: 65535
-        max_num_of_istreams: 65535
+            - uri: http://10.10.10.11:7777
 
     metrics:
       server:
-        - dev: net1
+        - address: net1
           port: 9090
 ---
 apiVersion: apps/v1
@@ -42,9 +40,7 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[
-          { "name": "sbi-network", "ips": ["10.10.10.15/24"] }
-        ]'
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "sbi-network", "ips": ["10.10.10.15/24"] }]'
       labels:
         app: ausf
     spec:

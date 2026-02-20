@@ -4,7 +4,7 @@ hss:
   # Note: SCTP works but is still experimental. TCP has been load-tested and performs in a production environment.
   transport: "TCP"
   #IP Addresses to bind on (List) - For TCP only the first IP is used, for SCTP all used for Transport (Multihomed).
-  bind_ip: ["10.10.10.66"]
+  bind_ip: ["0.0.0.0"]
 
   #Port to listen on (Same for TCP & SCTP)
   bind_port: 3868
@@ -101,9 +101,9 @@ logging:
     metric_logging_file: /pyhss/log/metrics.log
   log_to_terminal: False
   sqlalchemy_sql_echo: False
-  sqlalchemy_pool_recycle: 15
-  sqlalchemy_pool_size: 500
-  sqlalchemy_max_overflow: 500
+  sqlalchemy_pool_recycle: 3600
+  sqlalchemy_pool_size: 100
+  sqlalchemy_max_overflow: 50
 
 ## Database Parameters
 database:
@@ -112,8 +112,8 @@ database:
   username: pyhss
   password: ims_db_pass
   database: ims
-  readCacheEnabled: False
-  readCacheInterval: 60
+  readCacheEnabled: True 
+  readCacheInterval: 600
 
 ## External Webhook Notifications
 webhooks:

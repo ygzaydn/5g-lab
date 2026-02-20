@@ -1,3 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pcf-config
+  namespace: open5gs
+data:
+  pcf.yaml: |-
+    logger:
+      file:
+        path: /opt/open5gs/var/log/open5gs/pcf.log
+
+    global:
+      max:
+        ue: 8192
+
+    pcf:
+      sbi:
+        server:
+          - address: 10.10.10.17
+            port: 7777
+        client:
+          scp:
+            - uri: http://10.10.10.11:7777
+    metrics:
+      server:
+        - address: 10.10.10.17
+          port: 9090
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,9 +39,7 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[
-          { "name": "sbi-network", "ips": ["10.10.10.17/24"] }
-        ]'
+        k8s.v1.cni.cncf.io/networks: '[{ "name": "sbi-network", "ips": ["10.10.10.17/24"] }]'
       labels:
         app: pcf
     spec:
@@ -23,22 +49,6 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # Global limitleri en başa ekle
-            if ! grep -q "global:" /opt/open5gs/etc/open5gs/pcf.yaml; then
-              printf "global:\n  max:\n    ue: 8192\n" > /tmp/pcf_header.yaml
-              cat /opt/open5gs/etc/open5gs/pcf.yaml >> /tmp/pcf_header.yaml
-              mv /tmp/pcf_header.yaml /opt/open5gs/etc/open5gs/pcf.yaml
-            else
-              sed -i '/global:/!b;n;n;s/ue: .*/ue: 8192/' /opt/open5gs/etc/open5gs/pcf.yaml
-            fi
-
-            # SBI Stream limitlerini ekle
-            sed -i '/sbi:/a \    max_num_of_ostreams: 65535\n    max_num_of_istreams: 65535' /opt/open5gs/etc/open5gs/pcf.yaml
-
-            # Standart sed işlemleri
-            sed -i 's/dev: eth0/dev: net1/g' /opt/open5gs/etc/open5gs/pcf.yaml
-            sed -i 's/addr: 127.0.0.7/addr: 0.0.0.0/g' /opt/open5gs/etc/open5gs/pcf.yaml
-            
             ulimit -n 65535
             /opt/open5gs/bin/open5gs-pcfd -c /opt/open5gs/etc/open5gs/pcf.yaml
         env:
@@ -46,6 +56,17 @@ spec:
           value: "mongodb://mongodb:27017/open5gs"
         ports:
         - containerPort: 7777
+          protocol: TCP
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - name: pcf-config
+          mountPath: /opt/open5gs/etc/open5gs/pcf.yaml
+          subPath: pcf.yaml
+      volumes:
+      - name: pcf-config
+        configMap:
+          name: pcf-config
 ---
 apiVersion: v1
 kind: Service
