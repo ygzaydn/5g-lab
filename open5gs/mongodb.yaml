@@ -39,6 +39,7 @@ metadata:
   name: open5gs-mongodb-pvc
   namespace: open5gs
 spec:
+  volumeName: mongodb-pv
   accessModes:
     - ReadWriteOnce
   resources:

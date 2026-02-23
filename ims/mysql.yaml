@@ -60,6 +60,7 @@ metadata:
   name: ims-mysql-pvc
   namespace: open5gs
 spec:
+  volumeName: mysql-pv
   accessModes:
     - ReadWriteOnce
   resources:
